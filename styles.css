@@ -6,15 +6,24 @@ body {
     height: 100vh;
     margin: 0;
     background-color: #000;
+    overflow: hidden; /* Prevent scrolling on mobile */
 }
 
 #gameContainer {
     position: relative;
-    display: inline-block;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
 canvas {
     border: 1px solid white;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
 #startButton, #playAgainButton, #toggleSfx, #toggleMusic {
@@ -53,28 +62,22 @@ canvas {
 #audioControls {
     position: absolute;
     bottom: 20px;
-    left: 0;
-    right: 0;
+    left: 20px;
     display: flex;
     justify-content: space-between;
-    padding: 0 20px;
+    width: calc(100% - 40px);
+    z-index: 10;
 }
 
-#toggleSfx {
-    position: absolute;
-    left: 10px;
-    bottom: 20px;
-}
-
-#toggleMusic {
-    position: absolute;
-    right: 10px;
-    bottom: 20px;
+#toggleSfx, #toggleMusic {
+    position: relative;
+    padding: 8px 16px;
+    font-size: 14px;
 }
 
 #gameTitle {
     position: absolute;
-    top: -60px; /* Adjust this value to position the title above the canvas */
+    top: 20px; /* Adjust as needed */
     left: 50%;
     transform: translateX(-50%);
     font-size: 36px;
@@ -82,11 +85,12 @@ canvas {
     text-align: center;
     width: 100%;
     margin: 0;
+    z-index: 10;
 }
 
 #toggleSfx, #toggleMusic {
-    padding: 8px 16px; /* Decreased padding */
-    font-size: 14px;   /* Decreased font size */
+    position: static;
+    margin-bottom: 10px;
 }
 
 @keyframes paddleFlash {
@@ -97,4 +101,28 @@ canvas {
 
 .paddle-flash {
     animation: paddleFlash 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    #gameTitle {
+        font-size: 24px;
+        top: 10px;
+    }
+
+    #startButton, #playAgainButton {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+
+    #toggleSfx, #toggleMusic {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    #audioControls {
+        bottom: 10px;
+        left: 10px;
+        width: calc(100% - 20px);
+    }
 }

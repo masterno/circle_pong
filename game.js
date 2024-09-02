@@ -70,6 +70,14 @@ let paddleSizeMultiplier = 1;
 // Add this variable at the top of your file with other game constants
 const maxBallSpeed = 8; // Adjust this value as needed
 
+// Add these variables at the top of your file
+let canvasScale = 1;
+let canvasOffsetX = 0;
+let canvasOffsetY = 0;
+
+// Add this constant at the top of your file
+const MOBILE_SCREEN_THRESHOLD = 600;
+
 function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
@@ -81,8 +89,6 @@ function init() {
 
     // Set up event listeners
     document.addEventListener('mousemove', movePaddle);
-    canvas.addEventListener('touchstart', movePaddleTouch); // Add touch event
-    canvas.addEventListener('touchmove', movePaddleTouch); // Add touch event
     document.getElementById('startButton').addEventListener('click', startGame);
     document.getElementById('playAgainButton').addEventListener('click', startGame);
 
@@ -104,6 +110,14 @@ function init() {
 
     // Draw initial game state
     draw();
+
+    // Add this after setting up the canvas
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Add touch event listeners for mobile
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
 }
 
 function startGame() {
@@ -122,6 +136,12 @@ function startGame() {
     
     initPowerups();
     gameLoop();
+
+    // Adjust initial ball speed for mobile devices
+    if (window.innerWidth <= MOBILE_SCREEN_THRESHOLD) {
+        ball.dx *= 0.7;
+        ball.dy *= 0.7;
+    }
 }
 
 function gameLoop() {
@@ -222,6 +242,16 @@ function increaseBallSpeed() {
         const speedMultiplier = (currentSpeed + SPEED_INCREASE) / currentSpeed;
         ball.dx *= speedMultiplier;
         ball.dy *= speedMultiplier;
+
+        // Limit maximum speed on mobile devices
+        if (window.innerWidth <= MOBILE_SCREEN_THRESHOLD) {
+            const mobileMaxSpeed = MAX_SPEED * 0.7;
+            if (currentSpeed > mobileMaxSpeed) {
+                const scaleFactor = mobileMaxSpeed / currentSpeed;
+                ball.dx *= scaleFactor;
+                ball.dy *= scaleFactor;
+            }
+        }
     }
 }
 
@@ -291,17 +321,7 @@ function draw() {
 }
 
 function movePaddle(event) {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left - CANVAS_SIZE / 2;
-    const mouseY = event.clientY - rect.top - CANVAS_SIZE / 2;
-    paddleAngle = Math.atan2(mouseY, mouseX);
-}
-
-function movePaddleTouch(event) {
-    const rect = canvas.getBoundingClientRect();
-    const touchX = event.touches[0].clientX - rect.left - CANVAS_SIZE / 2;
-    const touchY = event.touches[0].clientY - rect.top - CANVAS_SIZE / 2;
-    paddleAngle = Math.atan2(touchY, touchX);
+    updatePaddlePosition(event);
 }
 
 function resetBall() {
@@ -367,7 +387,8 @@ function updateButtonText(buttonId, text) {
 
 function initPowerups() {
     clearInterval(powerupSpawnInterval);
-    powerupSpawnInterval = setInterval(spawnPowerup, 10000); // Spawn every 10 seconds
+    const spawnInterval = window.innerWidth <= MOBILE_SCREEN_THRESHOLD ? 15000 : 10000;
+    powerupSpawnInterval = setInterval(spawnPowerup, spawnInterval);
 }
 
 function spawnPowerup() {
@@ -525,6 +546,70 @@ function addPaddleFlashEffect() {
     setTimeout(() => {
         paddle.remove();
     }, 300); // Remove after animation completes
+}
+
+function resizeCanvas() {
+    const container = document.getElementById('gameContainer');
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    
+    // Determine the size while maintaining aspect ratio
+    const aspectRatio = CANVAS_SIZE / CANVAS_SIZE; // This is 1 for a square canvas
+    let newWidth, newHeight;
+
+    if (containerWidth / containerHeight > aspectRatio) {
+        // Container is wider than needed
+        newHeight = containerHeight;
+        newWidth = newHeight * aspectRatio;
+    } else {
+        // Container is taller than needed
+        newWidth = containerWidth;
+        newHeight = newWidth / aspectRatio;
+    }
+    
+    canvasScale = newWidth / CANVAS_SIZE;
+    
+    canvas.style.width = `${newWidth}px`;
+    canvas.style.height = `${newHeight}px`;
+    
+    canvasOffsetX = (containerWidth - newWidth) / 2;
+    canvasOffsetY = (containerHeight - newHeight) / 2;
+    
+    canvas.style.position = 'absolute';
+    canvas.style.left = `${canvasOffsetX}px`;
+    canvas.style.top = `${canvasOffsetY}px`;
+
+    updateButtonPositions();
+}
+
+function updateButtonPositions() {
+    const audioControls = document.getElementById('audioControls');
+    audioControls.style.bottom = `${canvasOffsetY + 20}px`;
+    audioControls.style.left = `${canvasOffsetX + 20}px`;
+    audioControls.style.width = `${canvas.offsetWidth - 40}px`;
+}
+
+function handleTouchStart(event) {
+    event.preventDefault();
+    updatePaddlePosition(event.touches[0]);
+}
+
+function handleTouchMove(event) {
+    event.preventDefault();
+    updatePaddlePosition(event.touches[0]);
+}
+
+function updatePaddlePosition(touch) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CANVAS_SIZE / rect.width;
+    const scaleY = CANVAS_SIZE / rect.height;
+    
+    const canvasX = (touch.clientX - rect.left) * scaleX;
+    const canvasY = (touch.clientY - rect.top) * scaleY;
+    
+    const mouseX = canvasX - CANVAS_SIZE / 2;
+    const mouseY = canvasY - CANVAS_SIZE / 2;
+    paddleAngle = Math.atan2(mouseY, mouseX);
 }
 
 window.onload = init;
