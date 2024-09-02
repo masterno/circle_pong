@@ -57,6 +57,7 @@ canvas {
 
 #playAgainButton {
     top: 70%; /* Position it below the "Game Over" text */
+    touch-action: manipulation;
 }
 
 #audioControls {
