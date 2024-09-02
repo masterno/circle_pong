@@ -25,6 +25,15 @@ let paddleHitSound, gameStartSound, gameOverSound, backgroundMusic;
 let sfxEnabled = true;
 let musicEnabled = true;
 
+// Powerup constants
+const POWERUP_SIZE = 40; // Increased size for better visibility
+const POWERUP_DURATION = 10000; // 10 seconds
+const POWERUP_TYPES = ['speedBoost', 'sizeIncrease', 'slowMotion'];
+
+// Modify game variables
+let activePowerups = [];
+let powerupSpawnInterval;
+
 function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
@@ -49,6 +58,12 @@ function init() {
     document.getElementById('toggleSfx').addEventListener('click', toggleSfx);
     document.getElementById('toggleMusic').addEventListener('click', toggleMusic);
 
+    // Check if icons are loaded
+    POWERUP_TYPES.forEach(type => {
+        const icon = document.getElementById(`${type}Icon`);
+        console.log(`${type} icon loaded:`, icon.complete);
+    });
+
     // Draw initial game state
     draw();
 }
@@ -64,6 +79,8 @@ function startGame() {
     document.getElementById('playAgainButton').style.display = 'none';
     playSound(gameStartSound);
     playMusic();
+    activePowerups = [];
+    initPowerups();
     gameLoop();
 }
 
@@ -124,6 +141,8 @@ function update() {
             endGame();
         }
     }
+
+    updatePowerups();
 }
 
 function checkLevelUp() {
@@ -184,6 +203,18 @@ function draw() {
         ctx.fillText('Highest Level: ' + level, CANVAS_SIZE / 2, CANVAS_SIZE / 2 + 50);
         ctx.textAlign = 'start';
     }
+
+    drawPowerups();
+
+    // Draw active powerups UI
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    activePowerups.forEach((powerup, index) => {
+        if (powerup.active) {
+            const timeLeft = Math.max(0, POWERUP_DURATION - (Date.now() - powerup.activatedAt));
+            ctx.fillText(`${powerup.type}: ${Math.ceil(timeLeft / 1000)}s`, 10, 90 + index * 25);
+        }
+    });
 }
 
 function movePaddle(event) {
@@ -206,6 +237,7 @@ function endGame() {
     document.getElementById('playAgainButton').style.display = 'block';
     playSound(gameOverSound);
     stopMusic();
+    clearInterval(powerupSpawnInterval);
     draw(); // Redraw to show the game over screen
 }
 
@@ -248,6 +280,129 @@ function stopMusic() {
 
 function updateButtonText(buttonId, text) {
     document.getElementById(buttonId).textContent = text;
+}
+
+function initPowerups() {
+    clearInterval(powerupSpawnInterval);
+    powerupSpawnInterval = setInterval(spawnPowerup, 10000); // Spawn every 10 seconds
+}
+
+function spawnPowerup() {
+    if (!gameRunning) return;
+
+    const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * (CIRCLE_RADIUS - POWERUP_SIZE);
+    const x = CANVAS_SIZE / 2 + Math.cos(angle) * distance;
+    const y = CANVAS_SIZE / 2 + Math.sin(angle) * distance;
+
+    activePowerups.push({
+        type,
+        x,
+        y,
+        active: false,
+        activatedAt: null
+    });
+}
+
+function updatePowerups() {
+    const currentTime = Date.now();
+
+    activePowerups = activePowerups.filter(powerup => {
+        if (!powerup.active) {
+            const dx = ball.x - powerup.x;
+            const dy = ball.y - powerup.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < BALL_RADIUS + POWERUP_SIZE / 2) {
+                activatePowerup(powerup);
+                return false; // Remove the powerup
+            }
+        } else if (currentTime - powerup.activatedAt > POWERUP_DURATION) {
+            deactivatePowerup(powerup);
+            return false;
+        }
+        return true;
+    });
+}
+
+function activatePowerup(powerup) {
+    powerup.active = true;
+    powerup.activatedAt = Date.now();
+
+    switch (powerup.type) {
+        case 'speedBoost':
+            ball.dx *= 1.5;
+            ball.dy *= 1.5;
+            break;
+        case 'sizeIncrease':
+            PADDLE_HEIGHT *= 1.5;
+            break;
+        case 'slowMotion':
+            ball.dx *= 0.5;
+            ball.dy *= 0.5;
+            break;
+    }
+}
+
+function deactivatePowerup(powerup) {
+    switch (powerup.type) {
+        case 'speedBoost':
+            ball.dx /= 1.5;
+            ball.dy /= 1.5;
+            break;
+        case 'sizeIncrease':
+            PADDLE_HEIGHT /= 1.5;
+            break;
+        case 'slowMotion':
+            ball.dx *= 2;
+            ball.dy *= 2;
+            break;
+    }
+}
+
+function drawPowerups() {
+    activePowerups.forEach(powerup => {
+        if (!powerup.active) {
+            // Set unique background colors for each powerup type
+            let backgroundColor;
+            switch (powerup.type) {
+                case 'speedBoost':
+                    backgroundColor = 'rgba(100, 200, 100, 0.7)'; // Light green
+                    break;
+                case 'sizeIncrease':
+                    backgroundColor = 'rgba(200, 100, 100, 0.7)'; // Light red
+                    break;
+                case 'slowMotion':
+                    backgroundColor = 'rgba(100, 100, 200, 0.7)'; // Light blue
+                    break;
+                default:
+                    backgroundColor = 'rgba(200, 200, 200, 0.7)'; // Default light gray
+            }
+
+            // Draw circular background
+            ctx.beginPath();
+            ctx.arc(powerup.x, powerup.y, POWERUP_SIZE / 2, 0, Math.PI * 2);
+            ctx.fillStyle = backgroundColor; // Use the unique background color
+            ctx.fill();
+            
+            // Add white border
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw powerup icon
+            const icon = document.getElementById(`${powerup.type}Icon`);
+            const iconSize = POWERUP_SIZE * 0.7; // Slightly larger icon
+            ctx.drawImage(
+                icon,
+                powerup.x - iconSize / 2,
+                powerup.y - iconSize / 2,
+                iconSize,
+                iconSize
+            );
+        }
+    });
 }
 
 window.onload = init;
