@@ -91,6 +91,9 @@ function init() {
     document.addEventListener('mousemove', movePaddle);
     document.getElementById('startButton').addEventListener('click', startGame);
     document.getElementById('playAgainButton').addEventListener('click', startGame);
+    
+    // Add touch event listeners for the play again button
+    document.getElementById('playAgainButton').addEventListener('touchstart', handlePlayAgainTouch);
 
     // Initialize audio
     paddleHitSound = document.getElementById('paddleHitSound');
@@ -534,10 +537,24 @@ function resetPowerups() {
 function addPaddleFlashEffect() {
     const paddle = document.createElement('div');
     paddle.style.position = 'absolute';
-    paddle.style.width = `${PADDLE_WIDTH}px`;
-    paddle.style.height = `${PADDLE_HEIGHT * paddleSizeMultiplier}px`;
-    paddle.style.left = `${CANVAS_SIZE / 2 + Math.cos(paddleAngle) * CIRCLE_RADIUS - PADDLE_WIDTH / 2}px`;
-    paddle.style.top = `${CANVAS_SIZE / 2 + Math.sin(paddleAngle) * CIRCLE_RADIUS - (PADDLE_HEIGHT * paddleSizeMultiplier) / 2}px`;
+    
+    // Calculate scaled dimensions
+    const scaledWidth = PADDLE_WIDTH * canvasScale;
+    const scaledHeight = PADDLE_HEIGHT * paddleSizeMultiplier * canvasScale;
+    
+    paddle.style.width = `${scaledWidth}px`;
+    paddle.style.height = `${scaledHeight}px`;
+    
+    // Calculate scaled position
+    const scaledCenterX = CANVAS_SIZE / 2 * canvasScale;
+    const scaledCenterY = CANVAS_SIZE / 2 * canvasScale;
+    const scaledRadius = CIRCLE_RADIUS * canvasScale;
+    
+    const left = scaledCenterX + Math.cos(paddleAngle) * scaledRadius - scaledWidth / 2 + canvasOffsetX;
+    const top = scaledCenterY + Math.sin(paddleAngle) * scaledRadius - scaledHeight / 2 + canvasOffsetY;
+    
+    paddle.style.left = `${left}px`;
+    paddle.style.top = `${top}px`;
     paddle.style.transform = `rotate(${paddleAngle}rad)`;
     paddle.classList.add('paddle-flash');
 
@@ -610,6 +627,12 @@ function updatePaddlePosition(touch) {
     const mouseX = canvasX - CANVAS_SIZE / 2;
     const mouseY = canvasY - CANVAS_SIZE / 2;
     paddleAngle = Math.atan2(mouseY, mouseX);
+}
+
+// Add this new function to handle touch events on the play again button
+function handlePlayAgainTouch(event) {
+    event.preventDefault(); // Prevent default touch behavior
+    startGame();
 }
 
 window.onload = init;
