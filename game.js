@@ -81,6 +81,8 @@ function init() {
 
     // Set up event listeners
     document.addEventListener('mousemove', movePaddle);
+    canvas.addEventListener('touchstart', movePaddleTouch); // Add touch event
+    canvas.addEventListener('touchmove', movePaddleTouch); // Add touch event
     document.getElementById('startButton').addEventListener('click', startGame);
     document.getElementById('playAgainButton').addEventListener('click', startGame);
 
@@ -185,6 +187,9 @@ function update() {
             levelProgress++;
             checkLevelUp();
             playSound(paddleHitSound);
+
+            // Add flash effect
+            addPaddleFlashEffect();
         } else {
             // Game over
             endGame();
@@ -290,6 +295,13 @@ function movePaddle(event) {
     const mouseX = event.clientX - rect.left - CANVAS_SIZE / 2;
     const mouseY = event.clientY - rect.top - CANVAS_SIZE / 2;
     paddleAngle = Math.atan2(mouseY, mouseX);
+}
+
+function movePaddleTouch(event) {
+    const rect = canvas.getBoundingClientRect();
+    const touchX = event.touches[0].clientX - rect.left - CANVAS_SIZE / 2;
+    const touchY = event.touches[0].clientY - rect.top - CANVAS_SIZE / 2;
+    paddleAngle = Math.atan2(touchY, touchX);
 }
 
 function resetBall() {
@@ -496,6 +508,23 @@ function resetPowerups() {
     activePowerupTypes.clear();
     ballSpeedMultiplier = 1;
     paddleSizeMultiplier = 1;
+}
+
+function addPaddleFlashEffect() {
+    const paddle = document.createElement('div');
+    paddle.style.position = 'absolute';
+    paddle.style.width = `${PADDLE_WIDTH}px`;
+    paddle.style.height = `${PADDLE_HEIGHT * paddleSizeMultiplier}px`;
+    paddle.style.left = `${CANVAS_SIZE / 2 + Math.cos(paddleAngle) * CIRCLE_RADIUS - PADDLE_WIDTH / 2}px`;
+    paddle.style.top = `${CANVAS_SIZE / 2 + Math.sin(paddleAngle) * CIRCLE_RADIUS - (PADDLE_HEIGHT * paddleSizeMultiplier) / 2}px`;
+    paddle.style.transform = `rotate(${paddleAngle}rad)`;
+    paddle.classList.add('paddle-flash');
+
+    document.getElementById('gameContainer').appendChild(paddle);
+
+    setTimeout(() => {
+        paddle.remove();
+    }, 300); // Remove after animation completes
 }
 
 window.onload = init;
