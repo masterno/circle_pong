@@ -94,7 +94,8 @@ function init() {
     // Modify the event listeners for the Play Again button
     const playAgainButton = document.getElementById('playAgainButton');
     playAgainButton.addEventListener('click', handlePlayAgain);
-    playAgainButton.addEventListener('touchend', handlePlayAgain);
+    playAgainButton.addEventListener('touchstart', handlePlayAgain);
+    console.log('Play Again button listeners added');
     
     // Initialize audio
     paddleHitSound = document.getElementById('paddleHitSound');
@@ -124,9 +125,11 @@ function init() {
     canvas.addEventListener('touchmove', handleTouchMove);
 }
 
-// Add this new function to handle the Play Again action
+// Update the handlePlayAgain function
 function handlePlayAgain(event) {
     event.preventDefault(); // Prevent default touch behavior
+    event.stopPropagation(); // Stop the event from bubbling up
+    console.log('Play Again button pressed'); // Add this line for debugging
     startGame();
 }
 
@@ -344,7 +347,10 @@ function resetBall() {
 function endGame() {
     gameRunning = false;
     gameOver = true;
-    document.getElementById('playAgainButton').style.display = 'block';
+    const playAgainButton = document.getElementById('playAgainButton');
+    playAgainButton.style.display = 'block';
+    playAgainButton.style.zIndex = '1000'; // Ensure it's on top
+    console.log('Game over, Play Again button should be visible'); // Add this line for debugging
     playSound(gameOverSound);
     stopMusic();
     clearInterval(powerupSpawnInterval);

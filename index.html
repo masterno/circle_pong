@@ -12,6 +12,8 @@
         <canvas id="gameCanvas"></canvas>
         <button id="startButton">Start Game</button>
         <button id="playAgainButton" style="display: none;">Play Again</button>
+        <!-- Add this debug element -->
+        <div id="debugInfo" style="position: absolute; bottom: 10px; right: 10px; color: white; z-index: 1001;"></div>
         <div id="audioControls">
             <button id="toggleSfx">SFX</button>
             <button id="toggleMusic">Music</button>
@@ -25,5 +27,14 @@
     <img id="sizeIncreaseIcon" src="size_increase_icon.png" style="display: none;">
     <img id="slowMotionIcon" src="slow_motion_icon.png" style="display: none;">
     <script src="game.js"></script>
+    <script>
+        // Add this debugging script
+        function updateDebugInfo() {
+            const debugInfo = document.getElementById('debugInfo');
+            const playAgainButton = document.getElementById('playAgainButton');
+            debugInfo.textContent = `Button display: ${playAgainButton.style.display}, Game over: ${gameOver}`;
+        }
+        setInterval(updateDebugInfo, 1000);
+    </script>
 </body>
 </html>
