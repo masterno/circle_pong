@@ -7,12 +7,14 @@ body {
     margin: 0;
     background-color: #000;
 }
-canvas {
-    border: 1px solid white;
-}
 
 #gameContainer {
     position: relative;
+    display: inline-block;
+}
+
+canvas {
+    border: 1px solid white;
 }
 
 #startButton, #playAgainButton {

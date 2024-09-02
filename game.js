@@ -1,7 +1,7 @@
 // Constants
 const CANVAS_SIZE = 600;
 const CIRCLE_RADIUS = 250;
-const PADDLE_HEIGHT = 60;
+const PADDLE_HEIGHT = 70; // Increased from 60 to 70
 const PADDLE_WIDTH = 10;
 const BALL_RADIUS = 10;
 
@@ -27,12 +27,48 @@ let musicEnabled = true;
 
 // Powerup constants
 const POWERUP_SIZE = 40; // Increased size for better visibility
-const POWERUP_DURATION = 10000; // 10 seconds
+const POWERUP_DURATION = 15000; // 15 seconds
 const POWERUP_TYPES = ['speedBoost', 'sizeIncrease', 'slowMotion'];
 
 // Modify game variables
 let activePowerups = [];
+let activePowerupTypes = new Set();
 let powerupSpawnInterval;
+
+// Add new Star class
+class Star {
+    constructor() {
+        this.x = Math.random() * CANVAS_SIZE;
+        this.y = Math.random() * CANVAS_SIZE;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.opacity = Math.random();
+        this.fadeDirection = Math.random() < 0.5 ? -1 : 1;
+    }
+
+    update() {
+        this.opacity += this.fadeDirection * 0.01;
+        if (this.opacity <= 0 || this.opacity >= 1) {
+            this.fadeDirection *= -1;
+        }
+    }
+
+    draw() {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Create stars array
+const stars = Array(200).fill().map(() => new Star());
+
+// Add these variables to the game variables section
+let ballSpeedMultiplier = 1;
+let paddleSizeMultiplier = 1;
+
+// Add this variable at the top of your file with other game constants
+const maxBallSpeed = 8; // Adjust this value as needed
 
 function init() {
     canvas = document.getElementById('gameCanvas');
@@ -79,7 +115,9 @@ function startGame() {
     document.getElementById('playAgainButton').style.display = 'none';
     playSound(gameStartSound);
     playMusic();
-    activePowerups = [];
+    
+    resetPowerups();
+    
     initPowerups();
     gameLoop();
 }
@@ -93,9 +131,12 @@ function gameLoop() {
 }
 
 function update() {
+    // Update stars
+    stars.forEach(star => star.update());
+
     // Move the ball
-    ball.x += ball.dx;
-    ball.y += ball.dy;
+    ball.x += ball.dx * ballSpeedMultiplier;
+    ball.y += ball.dy * ballSpeedMultiplier;
 
     // Ball collision with walls
     if (ball.x < BALL_RADIUS || ball.x > CANVAS_SIZE - BALL_RADIUS) {
@@ -110,10 +151,13 @@ function update() {
     const ballDistance = Math.sqrt((ball.x - CANVAS_SIZE / 2) ** 2 + (ball.y - CANVAS_SIZE / 2) ** 2);
 
     if (ballDistance > CIRCLE_RADIUS - BALL_RADIUS) {
-        if (Math.abs(ballAngle - paddleAngle) < Math.PI / 8) {
+        const paddleLeftAngle = paddleAngle - Math.atan(PADDLE_HEIGHT * paddleSizeMultiplier / (2 * CIRCLE_RADIUS));
+        const paddleRightAngle = paddleAngle + Math.atan(PADDLE_HEIGHT * paddleSizeMultiplier / (2 * CIRCLE_RADIUS));
+        
+        if (ballAngle >= paddleLeftAngle && ballAngle <= paddleRightAngle) {
             // Ball hit the paddle
             const hitAngle = ballAngle - paddleAngle;
-            const normalizedHitAngle = hitAngle / (Math.PI / 8); // Range: -1 to 1
+            const normalizedHitAngle = hitAngle / (Math.atan(PADDLE_HEIGHT * paddleSizeMultiplier / (2 * CIRCLE_RADIUS))); // Range: -1 to 1
             
             // Calculate reflection vector
             const normal = [Math.cos(ballAngle), Math.sin(ballAngle)];
@@ -132,6 +176,11 @@ function update() {
             ball.dx = (reflectX / newSpeed) * speed;
             ball.dy = (reflectY / newSpeed) * speed;
 
+            // Move the ball just outside the circle to prevent multiple collisions
+            const newBallDistance = CIRCLE_RADIUS - BALL_RADIUS - 1;
+            ball.x = CANVAS_SIZE / 2 + Math.cos(ballAngle) * newBallDistance;
+            ball.y = CANVAS_SIZE / 2 + Math.sin(ballAngle) * newBallDistance;
+
             score++;
             levelProgress++;
             checkLevelUp();
@@ -143,6 +192,15 @@ function update() {
     }
 
     updatePowerups();
+
+    // Ensure minimum ball speed
+    const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * ballSpeedMultiplier;
+    if (currentSpeed < 1) {
+        const minSpeed = 3;
+        const speedUpFactor = minSpeed / currentSpeed;
+        ball.dx *= speedUpFactor;
+        ball.dy *= speedUpFactor;
+    }
 }
 
 function checkLevelUp() {
@@ -166,6 +224,16 @@ function draw() {
     // Clear canvas
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
+    // Draw background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    // Draw stars
+    stars.forEach(star => {
+        star.update();
+        star.draw();
+    });
+
     // Draw circle
     ctx.beginPath();
     ctx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CIRCLE_RADIUS, 0, Math.PI * 2);
@@ -178,7 +246,7 @@ function draw() {
         ctx.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
         ctx.rotate(paddleAngle);
         ctx.fillStyle = 'white';
-        ctx.fillRect(CIRCLE_RADIUS - PADDLE_WIDTH / 2, -PADDLE_HEIGHT / 2, PADDLE_WIDTH, PADDLE_HEIGHT);
+        ctx.fillRect(CIRCLE_RADIUS - PADDLE_WIDTH / 2, -PADDLE_HEIGHT * paddleSizeMultiplier / 2, PADDLE_WIDTH, PADDLE_HEIGHT * paddleSizeMultiplier);
         ctx.restore();
 
         // Draw ball
@@ -238,6 +306,9 @@ function endGame() {
     playSound(gameOverSound);
     stopMusic();
     clearInterval(powerupSpawnInterval);
+    
+    resetPowerups();
+    
     draw(); // Redraw to show the game over screen
 }
 
@@ -301,22 +372,30 @@ function spawnPowerup() {
         x,
         y,
         active: false,
-        activatedAt: null
+        activatedAt: null,
+        spawnTime: Date.now()
     });
 }
+
+const POWERUP_LIFETIME = 15000; // 15 seconds in milliseconds
 
 function updatePowerups() {
     const currentTime = Date.now();
 
     activePowerups = activePowerups.filter(powerup => {
         if (!powerup.active) {
+            // Check if the powerup has been on the field for too long
+            if (currentTime - powerup.spawnTime > POWERUP_LIFETIME) {
+                return false; // Remove the powerup
+            }
+
             const dx = ball.x - powerup.x;
             const dy = ball.y - powerup.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < BALL_RADIUS + POWERUP_SIZE / 2) {
                 activatePowerup(powerup);
-                return false; // Remove the powerup
+                return true;
             }
         } else if (currentTime - powerup.activatedAt > POWERUP_DURATION) {
             deactivatePowerup(powerup);
@@ -327,36 +406,43 @@ function updatePowerups() {
 }
 
 function activatePowerup(powerup) {
-    powerup.active = true;
-    powerup.activatedAt = Date.now();
+    if (activePowerupTypes.has(powerup.type)) {
+        // If powerup of the same type is already active, just reset its duration
+        const existingPowerup = activePowerups.find(p => p.type === powerup.type && p.active);
+        if (existingPowerup) {
+            existingPowerup.activatedAt = Date.now();
+        }
+    } else {
+        powerup.active = true;
+        powerup.activatedAt = Date.now();
+        activePowerupTypes.add(powerup.type);
 
-    switch (powerup.type) {
-        case 'speedBoost':
-            ball.dx *= 1.5;
-            ball.dy *= 1.5;
-            break;
-        case 'sizeIncrease':
-            PADDLE_HEIGHT *= 1.5;
-            break;
-        case 'slowMotion':
-            ball.dx *= 0.5;
-            ball.dy *= 0.5;
-            break;
+        switch (powerup.type) {
+            case 'speedBoost':
+                ballSpeedMultiplier *= 1.25;
+                break;
+            case 'sizeIncrease':
+                paddleSizeMultiplier *= 1.5;
+                break;
+            case 'slowMotion':
+                ballSpeedMultiplier *= 0.5;
+                break;
+        }
     }
 }
 
 function deactivatePowerup(powerup) {
+    activePowerupTypes.delete(powerup.type);
+
     switch (powerup.type) {
         case 'speedBoost':
-            ball.dx /= 1.5;
-            ball.dy /= 1.5;
+            ballSpeedMultiplier /= 1.5;
             break;
         case 'sizeIncrease':
-            PADDLE_HEIGHT /= 1.5;
+            paddleSizeMultiplier /= 1.5;
             break;
         case 'slowMotion':
-            ball.dx *= 2;
-            ball.dy *= 2;
+            ballSpeedMultiplier *= 2;
             break;
     }
 }
@@ -403,6 +489,13 @@ function drawPowerups() {
             );
         }
     });
+}
+
+function resetPowerups() {
+    activePowerups = [];
+    activePowerupTypes.clear();
+    ballSpeedMultiplier = 1;
+    paddleSizeMultiplier = 1;
 }
 
 window.onload = init;
