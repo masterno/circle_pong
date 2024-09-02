@@ -91,10 +91,8 @@ function init() {
     document.addEventListener('mousemove', movePaddle);
     document.getElementById('startButton').addEventListener('click', startGame);
     document.getElementById('playAgainButton').addEventListener('click', startGame);
+    document.getElementById('playAgainButton').addEventListener('touchend', startGame);
     
-    // Add touch event listeners for the play again button
-    document.getElementById('playAgainButton').addEventListener('touchstart', handlePlayAgainTouch);
-
     // Initialize audio
     paddleHitSound = document.getElementById('paddleHitSound');
     gameStartSound = document.getElementById('gameStartSound');
@@ -627,12 +625,6 @@ function updatePaddlePosition(touch) {
     const mouseX = canvasX - CANVAS_SIZE / 2;
     const mouseY = canvasY - CANVAS_SIZE / 2;
     paddleAngle = Math.atan2(mouseY, mouseX);
-}
-
-// Add this new function to handle touch events on the play again button
-function handlePlayAgainTouch(event) {
-    event.preventDefault(); // Prevent default touch behavior
-    startGame();
 }
 
 window.onload = init;
