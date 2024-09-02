@@ -1,7 +1,7 @@
 // Constants
 const CANVAS_SIZE = 600;
 const CIRCLE_RADIUS = 250;
-const PADDLE_HEIGHT = 70; // Increased from 60 to 70
+const PADDLE_HEIGHT = 80; // Increased from 70 to 80
 const PADDLE_WIDTH = 10;
 const BALL_RADIUS = 10;
 
@@ -78,6 +78,11 @@ let canvasOffsetY = 0;
 // Add this constant at the top of your file
 const MOBILE_SCREEN_THRESHOLD = 600;
 
+// Add these variables to the game variables section
+let isMobileDevice = false;
+let mobileBallSpeedMultiplier = 0.7;
+let mobilePaddleSizeMultiplier = 1.2;
+
 function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
@@ -123,6 +128,9 @@ function init() {
     // Add touch event listeners for mobile
     canvas.addEventListener('touchstart', handleTouchStart);
     canvas.addEventListener('touchmove', handleTouchMove);
+
+    // Check if it's a mobile device
+    isMobileDevice = window.innerWidth <= MOBILE_SCREEN_THRESHOLD;
 }
 
 // Update the handlePlayAgain function
@@ -150,10 +158,11 @@ function startGame() {
     initPowerups();
     gameLoop();
 
-    // Adjust initial ball speed for mobile devices
-    if (window.innerWidth <= MOBILE_SCREEN_THRESHOLD) {
-        ball.dx *= 0.7;
-        ball.dy *= 0.7;
+    // Adjust initial ball speed and paddle size for mobile devices
+    if (isMobileDevice) {
+        ball.dx *= mobileBallSpeedMultiplier;
+        ball.dy *= mobileBallSpeedMultiplier;
+        paddleSizeMultiplier = mobilePaddleSizeMultiplier;
     }
 }
 
@@ -257,8 +266,8 @@ function increaseBallSpeed() {
         ball.dy *= speedMultiplier;
 
         // Limit maximum speed on mobile devices
-        if (window.innerWidth <= MOBILE_SCREEN_THRESHOLD) {
-            const mobileMaxSpeed = MAX_SPEED * 0.7;
+        if (isMobileDevice) {
+            const mobileMaxSpeed = MAX_SPEED * mobileBallSpeedMultiplier;
             if (currentSpeed > mobileMaxSpeed) {
                 const scaleFactor = mobileMaxSpeed / currentSpeed;
                 ball.dx *= scaleFactor;
@@ -294,7 +303,8 @@ function draw() {
         ctx.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
         ctx.rotate(paddleAngle);
         ctx.fillStyle = 'white';
-        ctx.fillRect(CIRCLE_RADIUS - PADDLE_WIDTH / 2, -PADDLE_HEIGHT * paddleSizeMultiplier / 2, PADDLE_WIDTH, PADDLE_HEIGHT * paddleSizeMultiplier);
+        const paddleHeight = PADDLE_HEIGHT * paddleSizeMultiplier * (isMobileDevice ? mobilePaddleSizeMultiplier : 1);
+        ctx.fillRect(CIRCLE_RADIUS - PADDLE_WIDTH / 2, -paddleHeight / 2, PADDLE_WIDTH, paddleHeight);
         ctx.restore();
 
         // Draw ball
@@ -468,13 +478,13 @@ function activatePowerup(powerup) {
 
         switch (powerup.type) {
             case 'speedBoost':
-                ballSpeedMultiplier *= 1.25;
+                ballSpeedMultiplier *= isMobileDevice ? 1.15 : 1.25;
                 break;
             case 'sizeIncrease':
-                paddleSizeMultiplier *= 1.5;
+                paddleSizeMultiplier *= isMobileDevice ? 1.3 : 1.5;
                 break;
             case 'slowMotion':
-                ballSpeedMultiplier *= 0.5;
+                ballSpeedMultiplier *= isMobileDevice ? 0.6 : 0.5;
                 break;
         }
     }
@@ -485,13 +495,13 @@ function deactivatePowerup(powerup) {
 
     switch (powerup.type) {
         case 'speedBoost':
-            ballSpeedMultiplier /= 1.5;
+            ballSpeedMultiplier /= isMobileDevice ? 1.15 : 1.25;
             break;
         case 'sizeIncrease':
-            paddleSizeMultiplier /= 1.5;
+            paddleSizeMultiplier /= isMobileDevice ? 1.3 : 1.5;
             break;
         case 'slowMotion':
-            ballSpeedMultiplier *= 2;
+            ballSpeedMultiplier /= isMobileDevice ? 0.6 : 0.5;
             break;
     }
 }
@@ -543,8 +553,8 @@ function drawPowerups() {
 function resetPowerups() {
     activePowerups = [];
     activePowerupTypes.clear();
-    ballSpeedMultiplier = 1;
-    paddleSizeMultiplier = 1;
+    ballSpeedMultiplier = isMobileDevice ? mobileBallSpeedMultiplier : 1;
+    paddleSizeMultiplier = isMobileDevice ? mobilePaddleSizeMultiplier : 1;
 }
 
 function addPaddleFlashEffect() {
