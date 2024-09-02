@@ -58,6 +58,14 @@ canvas {
 #playAgainButton {
     top: 70%; /* Position it below the "Game Over" text */
     touch-action: manipulation;
+    z-index: 1000; /* Ensure it's on top */
+    user-select: none; /* Prevent text selection */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+}
+
+#playAgainButton:active {
+    background-color: #fff;
+    color: #000;
 }
 
 #audioControls {
@@ -132,5 +140,10 @@ canvas {
         0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
         50% { box-shadow: 0 0 0 5px rgba(255, 255, 255, 0); }
         100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+
+    #playAgainButton {
+        font-size: 18px; /* Increase font size for better tappability */
+        padding: 15px 30px; /* Increase padding for a larger touch target */
     }
 }
