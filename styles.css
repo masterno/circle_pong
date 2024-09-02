@@ -95,12 +95,13 @@ canvas {
 
 @keyframes paddleFlash {
     0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-    50% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
     100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
 }
 
 .paddle-flash {
     animation: paddleFlash 0.3s ease-out;
+    border-radius: 5px;
 }
 
 /* Responsive adjustments */
@@ -124,5 +125,11 @@ canvas {
         bottom: 10px;
         left: 10px;
         width: calc(100% - 20px);
+    }
+
+    @keyframes paddleFlash {
+        0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+        50% { box-shadow: 0 0 0 5px rgba(255, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
     }
 }
