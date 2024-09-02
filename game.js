@@ -90,8 +90,11 @@ function init() {
     // Set up event listeners
     document.addEventListener('mousemove', movePaddle);
     document.getElementById('startButton').addEventListener('click', startGame);
-    document.getElementById('playAgainButton').addEventListener('click', startGame);
-    document.getElementById('playAgainButton').addEventListener('touchend', startGame);
+    
+    // Modify the event listeners for the Play Again button
+    const playAgainButton = document.getElementById('playAgainButton');
+    playAgainButton.addEventListener('click', handlePlayAgain);
+    playAgainButton.addEventListener('touchend', handlePlayAgain);
     
     // Initialize audio
     paddleHitSound = document.getElementById('paddleHitSound');
@@ -119,6 +122,12 @@ function init() {
     // Add touch event listeners for mobile
     canvas.addEventListener('touchstart', handleTouchStart);
     canvas.addEventListener('touchmove', handleTouchMove);
+}
+
+// Add this new function to handle the Play Again action
+function handlePlayAgain(event) {
+    event.preventDefault(); // Prevent default touch behavior
+    startGame();
 }
 
 function startGame() {
