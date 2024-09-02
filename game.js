@@ -80,7 +80,7 @@ const MOBILE_SCREEN_THRESHOLD = 600;
 
 // Add these variables to the game variables section
 let isMobileDevice = false;
-let mobileBallSpeedMultiplier = 0.7;
+let mobileBallSpeedMultiplier = 0.55; // Changed from 0.7 to 0.55 (about 21% slower)
 let mobilePaddleSizeMultiplier = 1.2;
 
 function init() {
@@ -478,13 +478,13 @@ function activatePowerup(powerup) {
 
         switch (powerup.type) {
             case 'speedBoost':
-                ballSpeedMultiplier *= isMobileDevice ? 1.15 : 1.25;
+                ballSpeedMultiplier *= isMobileDevice ? 1.1 : 1.25;
                 break;
             case 'sizeIncrease':
                 paddleSizeMultiplier *= isMobileDevice ? 1.3 : 1.5;
                 break;
             case 'slowMotion':
-                ballSpeedMultiplier *= isMobileDevice ? 0.6 : 0.5;
+                ballSpeedMultiplier *= isMobileDevice ? 0.7 : 0.5;
                 break;
         }
     }
@@ -495,13 +495,13 @@ function deactivatePowerup(powerup) {
 
     switch (powerup.type) {
         case 'speedBoost':
-            ballSpeedMultiplier /= isMobileDevice ? 1.15 : 1.25;
+            ballSpeedMultiplier /= isMobileDevice ? 1.1 : 1.25;
             break;
         case 'sizeIncrease':
             paddleSizeMultiplier /= isMobileDevice ? 1.3 : 1.5;
             break;
         case 'slowMotion':
-            ballSpeedMultiplier /= isMobileDevice ? 0.6 : 0.5;
+            ballSpeedMultiplier /= isMobileDevice ? 0.7 : 0.5;
             break;
     }
 }
