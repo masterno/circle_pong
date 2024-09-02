@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Circular Pong</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,14 +13,17 @@
         <button id="startButton">Start Game</button>
         <button id="playAgainButton" style="display: none;">Play Again</button>
         <div id="audioControls">
-            <button id="toggleSfx">Toggle SFX</button>
-            <button id="toggleMusic">Toggle Music</button>
+            <button id="toggleSfx">SFX</button>
+            <button id="toggleMusic">Music</button>
         </div>
     </div>
     <audio id="paddleHitSound" src="paddle_hit.wav"></audio>
     <audio id="gameStartSound" src="game_start.wav"></audio>
     <audio id="gameOverSound" src="game_over.wav"></audio>
     <audio id="backgroundMusic" src="background_music.mp3" loop></audio>
+    <img id="speedBoostIcon" src="speed_boost_icon.png" style="display: none;">
+    <img id="sizeIncreaseIcon" src="size_increase_icon.png" style="display: none;">
+    <img id="slowMotionIcon" src="slow_motion_icon.png" style="display: none;">
     <script src="game.js"></script>
 </body>
 </html>
